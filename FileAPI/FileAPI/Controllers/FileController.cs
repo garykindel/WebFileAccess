@@ -13,16 +13,21 @@
         public class FileController : ControllerBase
         {
             [HttpGet]
-            public IActionResult GetFile([FromQuery] string filePath)
+            public async Task<IActionResult> GetFile([FromQuery] string filePath)
             {  try
                 {
                     var memory = new MemoryStream();
                     using (var stream = new FileStream(filePath, FileMode.Open))
                     {
-                        stream.CopyTo(memory);
+                        await stream.CopyToAsync(memory);
                     }
                     memory.Position = 0;
-                    return File(memory, GetContentType(filePath), Path.GetFileName(filePath));
+                    var response = File(memory, GetContentType(filePath), Path.GetFileName(filePath));
+
+                    // Add Content-Length header
+                    Response.ContentLength = memory.Length;
+
+                    return response;
                 }
                 catch (FileNotFoundException)
                 {
